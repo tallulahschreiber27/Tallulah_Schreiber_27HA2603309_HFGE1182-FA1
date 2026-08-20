@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     private PlayerInputActions InputAction;
-    
+
     [Header("MOVEMENT PARAMETERS")]
     public float walkSpeed;
     public float sprintSpeed;
@@ -14,7 +14,7 @@ public class PlayerController : MonoBehaviour
     public Rigidbody rb;
     public bool isSprinting;
     private Vector2 moveDirection;
-    
+
     [Header("CAMERA PARAMETERS")]
     [SerializeField]
     private Camera playerCamera;
@@ -22,7 +22,7 @@ public class PlayerController : MonoBehaviour
     public float lookLimitX;
     private float cameraAngle = 0f;
     private Vector2 lookInput;
-    
+
     [Header("CROUCHING")]
     public CapsuleCollider hitbox;
     [SerializeField]
@@ -33,8 +33,8 @@ public class PlayerController : MonoBehaviour
     private float standingHeight = 2f;
     [SerializeField]
     private float cameraHeight = 1.5f;
-    
-    
+
+
     [Header("GROUND DETECTION")]
     [SerializeField]
     private bool isGrounded = true;
@@ -44,17 +44,17 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
-       rb = GetComponent<Rigidbody>();
-       InputAction = new PlayerInputActions();
+        rb = GetComponent<Rigidbody>();
+        InputAction = new PlayerInputActions();
     }
 
     private void OnEnable()
     {
         InputAction.Player.Enable();
-        
+
         InputAction.Player.Move.performed += context => moveDirection = context.ReadValue<Vector2>();
         InputAction.Player.Move.canceled += context => moveDirection = Vector2.zero;
-        
+
         InputAction.Player.Look.performed += context => lookInput = context.ReadValue<Vector2>();
         InputAction.Player.Look.canceled += context => lookInput = Vector2.zero;
 
@@ -70,7 +70,7 @@ public class PlayerController : MonoBehaviour
         InputAction.Player.Crouch.performed -= OnCrouch;
         InputAction.Player.Sprint.performed -= OnSprint;
         InputAction.Player.Sprint.canceled -= OnSprint;
-        InputAction.Player.Disable();  
+        InputAction.Player.Disable();
     }
 
 
@@ -98,45 +98,47 @@ public class PlayerController : MonoBehaviour
         Vector3 moveDir = transform.right * moveDirection.x + transform.forward * moveDirection.y;
         float currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
         Vector3 targetVelocity = moveDir * currentSpeed;
-        
+
         targetVelocity.y = rb.linearVelocity.y;
         rb.linearVelocity = targetVelocity;
     }
-    
+
     public void OnSprint(InputAction.CallbackContext context)
     {
         isSprinting = !isSprinting;
     }
 
-    
+
     public void LookHandler()
     {
         float mouseX = lookInput.x * mouseSensitivity * Time.deltaTime;
         float mouseY = lookInput.y * mouseSensitivity * Time.deltaTime;
-        
-        
+
+
         cameraAngle -= mouseY;
         cameraAngle = Mathf.Clamp(cameraAngle, -lookLimitX, lookLimitX);
 
-        
+
         playerCamera.transform.localRotation = Quaternion.Euler(cameraAngle, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
     }
-    
+
     private void OnJump(InputAction.CallbackContext context)
     {
         if (isGrounded)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            // Multiplying by mass ensures the jump height stays consistent regardless of weight
+            rb.AddForce(Vector3.up * jumpForce * rb.mass, ForceMode.Impulse);
         }
     }
 
+
     public void Crouch()
     {
-        float targetHeight = isCrouching ? crouchHeight:standingHeight;
+        float targetHeight = isCrouching ? crouchHeight : standingHeight;
         //float currentHeight = hitbox.height;
         hitbox.height = Mathf.Lerp(hitbox.height, targetHeight, 0.2f);
-        
+
         Vector3 camLocalPos = playerCamera.transform.localPosition;
         camLocalPos.y = Mathf.Lerp(camLocalPos.y, targetHeight - 0.25f, Time.deltaTime * .2f);
         hitbox.height = targetHeight;
@@ -151,7 +153,13 @@ public class PlayerController : MonoBehaviour
 
     public void GroundDetection()
     {
-        Vector3 start = transform.position + Vector3.up * 0.1f;
-        isGrounded = Physics.Raycast(start, Vector3.down, groundCheckDistance + 0.1f, groundLayer);
+        // Scales the start offset and the distance based on the object's local Y scale
+        float currentScaleY = transform.localScale.y;
+        Vector3 start = transform.position + (Vector3.up * 0.1f * currentScaleY);
+
+        // Scale the check distance relative to your character's size
+        float dynamicCheckDistance = (groundCheckDistance + 0.1f) * currentScaleY;
+
+        isGrounded = Physics.Raycast(start, Vector3.down, dynamicCheckDistance, groundLayer);
     }
 }

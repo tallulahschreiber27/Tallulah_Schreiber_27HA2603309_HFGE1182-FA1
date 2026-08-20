@@ -361,9 +361,9 @@ GameObject:
   - component: {fileID: 876614654}
   - component: {fileID: 876614653}
   - component: {fileID: 876614652}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Terrain
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -472,7 +472,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1190072128}
   serializedVersion: 4
-  m_Mass: 0.0000001
+  m_Mass: 1
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -576,11 +576,10 @@ Transform:
   m_GameObject: {fileID: 1190072128}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 212.98012, y: 101.13, z: 59.729156}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 127.31, y: 104.7, z: 25}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1505685249}
   - {fileID: 1514506856}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -598,8 +597,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walkSpeed: 30
   sprintSpeed: 40
-  jumpForce: 3
-  rb: {fileID: 1190072129}
+  jumpForce: 9
+  rb: {fileID: 0}
   isSprinting: 0
   playerCamera: {fileID: 1514506855}
   mouseSensitivity: 60
@@ -610,41 +609,10 @@ MonoBehaviour:
   standingHeight: 2
   cameraHeight: 1.5
   isGrounded: 1
-  groundCheckDistance: 0
+  groundCheckDistance: 1.1
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
---- !u!1 &1505685248
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1505685249}
-  m_Layer: 6
-  m_Name: GroundCheck
-  m_TagString: Ground
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1505685249
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505685248}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.050125122, y: -1.2999954, z: -0.14915466}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1190072133}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1514506853
 GameObject:
   m_ObjectHideFlags: 0
@@ -732,7 +700,7 @@ Transform:
   m_GameObject: {fileID: 1514506853}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.019882202, y: 0.87000275, z: 0.7708435}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
