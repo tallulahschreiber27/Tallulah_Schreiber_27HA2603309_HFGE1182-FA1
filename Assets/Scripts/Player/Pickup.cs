@@ -1,33 +1,17 @@
-using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public abstract class Pickup : MonoBehaviour
 {
-    private PlayerInputActions InputAction;
-    [SerializeField]protected int value;
+    [SerializeField] protected int value = 25;
     protected bool inRange = false;
-    protected GameObject  player;
+    protected GameObject player;
 
-    private void Awake()
+    public void Collect()
     {
-        InputAction = new PlayerInputActions();
-    }
-    private void OnEnable()
-    {
-        InputAction.Player.Enable();
-        InputAction.Player.Interact.performed += OnInteract;
-    }
+        // DEBUG LOG 6: Check if pickup script receives the call from the PlayerController
+        Debug.Log("[DEBUG 6] Pickup Collect() method called. inRange = " + inRange + ", player = " + (player != null ? player.name : "NULL"));
 
-    private void OnDisable()
-    {
-        InputAction.Player.Interact.performed -= OnInteract;
-        InputAction.Player.Disable();  
-    }
-    
-    public void OnInteract(InputAction.CallbackContext context)
-    {
-        if (inRange)
+        if (inRange && player != null)
         {
             ApplyEffect(player);
         }
@@ -39,6 +23,8 @@ public abstract class Pickup : MonoBehaviour
         {
             inRange = true;
             player = col.gameObject;
+            // DEBUG LOG 7: Confirm pickup script's internal trigger found the player tag
+            Debug.Log("[DEBUG 7] Pickup trigger entered by valid Player tag: " + col.gameObject.name);
         }
     }
 
@@ -48,10 +34,12 @@ public abstract class Pickup : MonoBehaviour
         {
             inRange = false;
             player = null;
+            // DEBUG LOG 8: Confirm pickup script registered the exit
+            Debug.Log("[DEBUG 8] Pickup trigger exited by Player tag: " + col.gameObject.name);
         }
     }
 
-    protected virtual void ApplyEffect(GameObject player) { }
+    protected abstract void ApplyEffect(GameObject player);
 
     protected virtual void DestroyPickup()
     {

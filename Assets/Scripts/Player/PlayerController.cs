@@ -16,8 +16,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveDirection;
 
     [Header("CAMERA PARAMETERS")]
-    [SerializeField]
-    private Camera playerCamera;
+    [SerializeField] private Camera playerCamera;
     public float mouseSensitivity;
     public float lookLimitX;
     private float cameraAngle = 0f;
@@ -25,22 +24,18 @@ public class PlayerController : MonoBehaviour
 
     [Header("CROUCHING")]
     public CapsuleCollider hitbox;
-    [SerializeField]
-    private bool isCrouching;
-    [SerializeField]
-    private float crouchHeight = 1f;
-    [SerializeField]
-    private float standingHeight = 2f;
-    [SerializeField]
-    private float cameraHeight = 1.5f;
-
+    [SerializeField] private bool isCrouching;
+    [SerializeField] private float crouchHeight = 1f;
+    [SerializeField] private float standingHeight = 2f;
+    [SerializeField] private float cameraHeight = 1.5f;
 
     [Header("GROUND DETECTION")]
-    [SerializeField]
-    private bool isGrounded = true;
+    [SerializeField] private bool isGrounded = true;
     public float groundCheckDistance;
     public LayerMask groundLayer;
 
+    // Track the pickup the player is currently standing inside
+    private Pickup currentPickupInRange = null;
 
     private void Awake()
     {
@@ -66,6 +61,8 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisable()
     {
+        InputAction.Player.Move.performed -= context => moveDirection = context.ReadValue<Vector2>();
+        InputAction.Player.Look.performed -= context => lookInput = Vector2.zero;
         InputAction.Player.Jump.performed -= OnJump;
         InputAction.Player.Crouch.performed -= OnCrouch;
         InputAction.Player.Sprint.performed -= OnSprint;
@@ -73,24 +70,63 @@ public class PlayerController : MonoBehaviour
         InputAction.Player.Disable();
     }
 
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
-    // Update is called once per frame
     void Update()
     {
         LookHandler();
+
+        // --- HARDCODED MANUAL E KEY PRESS ---
+        // This runs independently of your action map asset configuration
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            Debug.Log("[MANUAL INPUT] Physical 'E' key pressed down!");
+            ExecuteManualInteraction();
+        }
     }
 
     private void FixedUpdate()
     {
         MoveHandler();
         GroundDetection();
+    }
+
+    // Safely handles the pickup activation logic
+    private void ExecuteManualInteraction()
+    {
+        if (currentPickupInRange != null)
+        {
+            Debug.Log("[DEBUG 2] Forwarding collect command to pickup: " + currentPickupInRange.gameObject.name);
+            currentPickupInRange.Collect();
+        }
+        else
+        {
+            Debug.LogWarning("[DEBUG 3] 'E' pressed, but no pickup is currently detected near the player.");
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Pickup pickup = other.GetComponent<Pickup>();
+        if (pickup != null)
+        {
+            currentPickupInRange = pickup;
+            Debug.Log("[DEBUG 4] Player entered trigger of pickup: " + other.gameObject.name);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        Pickup pickup = other.GetComponent<Pickup>();
+        if (pickup != null && currentPickupInRange == pickup)
+        {
+            currentPickupInRange = null;
+            Debug.Log("[DEBUG 5] Player exited trigger of pickup: " + other.gameObject.name);
+        }
     }
 
     public void MoveHandler()
@@ -108,16 +144,13 @@ public class PlayerController : MonoBehaviour
         isSprinting = !isSprinting;
     }
 
-
     public void LookHandler()
     {
         float mouseX = lookInput.x * mouseSensitivity * Time.deltaTime;
         float mouseY = lookInput.y * mouseSensitivity * Time.deltaTime;
 
-
         cameraAngle -= mouseY;
         cameraAngle = Mathf.Clamp(cameraAngle, -lookLimitX, lookLimitX);
-
 
         playerCamera.transform.localRotation = Quaternion.Euler(cameraAngle, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
@@ -127,16 +160,13 @@ public class PlayerController : MonoBehaviour
     {
         if (isGrounded)
         {
-            // Multiplying by mass ensures the jump height stays consistent regardless of weight
             rb.AddForce(Vector3.up * jumpForce * rb.mass, ForceMode.Impulse);
         }
     }
 
-
     public void Crouch()
     {
         float targetHeight = isCrouching ? crouchHeight : standingHeight;
-        //float currentHeight = hitbox.height;
         hitbox.height = Mathf.Lerp(hitbox.height, targetHeight, 0.2f);
 
         Vector3 camLocalPos = playerCamera.transform.localPosition;
@@ -153,13 +183,9 @@ public class PlayerController : MonoBehaviour
 
     public void GroundDetection()
     {
-        // Scales the start offset and the distance based on the object's local Y scale
         float currentScaleY = transform.localScale.y;
         Vector3 start = transform.position + (Vector3.up * 0.1f * currentScaleY);
-
-        // Scale the check distance relative to your character's size
         float dynamicCheckDistance = (groundCheckDistance + 0.1f) * currentScaleY;
-
         isGrounded = Physics.Raycast(start, Vector3.down, dynamicCheckDistance, groundLayer);
     }
 }
