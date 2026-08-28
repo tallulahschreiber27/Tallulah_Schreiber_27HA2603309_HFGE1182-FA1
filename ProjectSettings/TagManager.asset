@@ -10,6 +10,7 @@ TagManager:
   - Crate
   - Arrow
   - Punch
+  - NPC
   layers:
   - Default
   - TransparentFX
