@@ -61,7 +61,11 @@ public class PlayerController : MonoBehaviour
     private void OnDisable()
     {
         InputAction.Player.Move.performed -= context => moveDirection = context.ReadValue<Vector2>();
-        InputAction.Player.Look.performed -= context => lookInput = Vector2.zero;
+        InputAction.Player.Move.canceled -= context => moveDirection = Vector2.zero;
+
+        InputAction.Player.Look.performed -= context => lookInput = context.ReadValue<Vector2>();
+        InputAction.Player.Look.canceled -= context => lookInput = Vector2.zero;
+
         InputAction.Player.Jump.performed -= OnJump;
         InputAction.Player.Crouch.performed -= OnCrouch;
         InputAction.Player.Sprint.performed -= OnSprint;
@@ -88,8 +92,8 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        MoveHandler();
         GroundDetection();
+        MoveHandler();
     }
 
     private void ExecuteManualInteraction()
@@ -129,10 +133,14 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 moveDir = transform.right * moveDirection.x + transform.forward * moveDirection.y;
         float currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
+
+        Vector3 currentVelocity = rb.linearVelocity;
         Vector3 targetVelocity = moveDir * currentSpeed;
 
-        targetVelocity.y = rb.linearVelocity.y;
-        rb.linearVelocity = targetVelocity;
+        currentVelocity.x = targetVelocity.x;
+        currentVelocity.z = targetVelocity.z;
+
+        rb.linearVelocity = currentVelocity;
     }
 
     public void OnSprint(InputAction.CallbackContext context)
@@ -156,7 +164,7 @@ public class PlayerController : MonoBehaviour
     {
         if (isGrounded)
         {
-            rb.AddForce(Vector3.up * jumpForce * rb.mass, ForceMode.Impulse);
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
         }
     }
 
