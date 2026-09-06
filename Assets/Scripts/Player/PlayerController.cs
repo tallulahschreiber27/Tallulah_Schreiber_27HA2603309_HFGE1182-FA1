@@ -34,7 +34,6 @@ public class PlayerController : MonoBehaviour
     public float groundCheckDistance;
     public LayerMask groundLayer;
 
-    // Track the pickup the player is currently standing inside
     private Pickup currentPickupInRange = null;
 
     private void Awake()
@@ -80,8 +79,6 @@ public class PlayerController : MonoBehaviour
     {
         LookHandler();
 
-        // --- HARDCODED MANUAL E KEY PRESS ---
-        // This runs independently of your action map asset configuration
         if (Input.GetKeyDown(KeyCode.E))
         {
             Debug.Log("[MANUAL INPUT] Physical 'E' key pressed down!");
@@ -95,7 +92,6 @@ public class PlayerController : MonoBehaviour
         GroundDetection();
     }
 
-    // Safely handles the pickup activation logic
     private void ExecuteManualInteraction()
     {
         if (currentPickupInRange != null)

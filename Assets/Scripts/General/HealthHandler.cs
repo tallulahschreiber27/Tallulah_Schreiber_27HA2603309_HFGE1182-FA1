@@ -3,33 +3,62 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UI; // REQUIRED: For Slider control elements
+using UnityEngine.UI; 
 
 public class HealthHandler : MonoBehaviour
 {
     [Header("HEALTH PARAMETERS")]
+    [Tooltip("Add tags here to define what this character is vulnerable to. Leave empty to accept ALL damage.")]
     [SerializeField] private string[] damageTags;
     [SerializeField] private float health;
     [SerializeField] private float healthMax = 100f;
-    
+
     [Header("UI ELEMENTS")]
-    [SerializeField] private Slider healthSlider; // Drag and drop your health bar Slider here!
+    [Tooltip("Drag and drop your health bar Slider here!")]
+    [SerializeField] private UnityEngine.UI.Slider healthSlider;
+
+    [Header("HEALTHBAR POSITIONING")]
+    [Tooltip("How high above the character's pivot point should the health bar float?")]
+    [SerializeField] private Vector3 healthBarOffset = new Vector3(0f, 2.2f, 0f);
+    private Transform canvasTransform;
+    private Transform mainCameraTransform;
 
     [Header("DECAY PARAMETERS")]
     [SerializeField] private bool doesDecay = false;
     [SerializeField] private float decayTickRate = 1f;
     [SerializeField] private float decayDamage = 2f;
-    private float decayTimer; // FIXED: Replaces the broken Update-coroutine frame loop
-    
+    private float decayTimer;
+
     [Header("DEATH PARAMETERS")]
     [SerializeField] private bool destroyOnDeath = true;
     [SerializeField] private float destroyOnDeathDelay = 0f;
-    
-    private bool isDead = false; // Prevents death functions from spamming continuously
+
+    private bool isDead = false;
 
     void Start()
     {
         health = healthMax;
+
+        if (healthSlider == null)
+        {
+            healthSlider = GetComponentInChildren<UnityEngine.UI.Slider>();
+        }
+
+        if (healthSlider != null)
+        {
+            Canvas parentCanvas = healthSlider.GetComponentInParent<Canvas>();
+            if (parentCanvas != null)
+            {
+                canvasTransform = parentCanvas.transform;
+                canvasTransform.SetParent(null); 
+            }
+        }
+
+        if (Camera.main != null)
+        {
+            mainCameraTransform = Camera.main.transform;
+        }
+
         UpdateHealthBarUI();
     }
 
@@ -37,25 +66,36 @@ public class HealthHandler : MonoBehaviour
     {
         if (isDead) return;
 
-        // FIXED: Safe, frame-rate independent decay accumulation tracking
         if (doesDecay)
         {
             decayTimer += Time.deltaTime;
             if (decayTimer >= decayTickRate)
             {
                 DamageHandler(decayDamage);
-                decayTimer = 0f; // Reset tick interval
+                decayTimer = 0f;
             }
         }
     }
 
-    // Refreshes the physical filling slider value accurately
+    void LateUpdate()
+    {
+        if (isDead || canvasTransform == null) return;
+
+        canvasTransform.position = transform.position + healthBarOffset;
+
+        if (mainCameraTransform != null)
+        {
+            canvasTransform.LookAt(canvasTransform.position + mainCameraTransform.rotation * Vector3.forward,
+                                   mainCameraTransform.rotation * Vector3.up);
+        }
+    }
+
     private void UpdateHealthBarUI()
     {
         if (healthSlider != null)
         {
-            // Always set Slider Min Value to 0 and Max Value to 1 in the inspector!
-            healthSlider.value = health / healthMax;
+            
+            healthSlider.value = Mathf.Clamp01(health / healthMax);
         }
     }
 
@@ -63,9 +103,14 @@ public class HealthHandler : MonoBehaviour
     {
         if (isDead) return;
 
-        if (damageTags.Contains(damageTag))
+        
+        if (damageTag == "Arrow" || damageTag == "Enemy" || (damageTags != null && damageTags.Contains(damageTag)))
         {
             ApplyDamage(damageAmount);
+        }
+        else
+        {
+            Debug.Log($"[{gameObject.name}] blocked damage from tag: {damageTag} (Not in accepted list).");
         }
     }
 
@@ -117,6 +162,12 @@ public class HealthHandler : MonoBehaviour
         isDead = true;
 
         Debug.Log($"[{gameObject.name}] has died.");
+
+        
+        if (canvasTransform != null)
+        {
+            Destroy(canvasTransform.gameObject);
+        }
 
         if (destroyOnDeath)
         {

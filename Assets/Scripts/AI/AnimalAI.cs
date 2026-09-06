@@ -24,16 +24,14 @@ public class AnimalAI : MonoBehaviour
     private Vector3 target;
     private bool isIdleCoroutineRunning = false;
 
-    // FIXED: Store a multiplier based on the animal's physical scale size axis
     private float scaleMultiplier = 1f;
 
     void Start()
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
 
-        // Calculate the maximum scale dimension to normalize distances correctly
         scaleMultiplier = Mathf.Max(transform.localScale.x, transform.localScale.y, transform.localScale.z);
-        if (scaleMultiplier <= 0) scaleMultiplier = 1f; // Prevent division-by-zero or freezing bugs
+        if (scaleMultiplier <= 0) scaleMultiplier = 1f; 
 
         if (areaCenter == null)
         {
@@ -46,7 +44,6 @@ public class AnimalAI : MonoBehaviour
             if (player != null) playerTransform = player.transform;
         }
 
-        // FIXED: Force-snap the animal down onto the NavMesh dynamically at start, accounting for scale bounds
         NavMeshHit closestHit;
         if (NavMesh.SamplePosition(transform.position, out closestHit, 5f * scaleMultiplier, NavMesh.AllAreas))
         {
@@ -61,7 +58,6 @@ public class AnimalAI : MonoBehaviour
     {
         if (currentState == NPCState.Dead || areaCenter == null) return;
 
-        // 1. AREA RESTRICTION HARD CHECK (Scaled)
         if (Vector3.Distance(transform.position, areaCenter.position) > (areaRadius * scaleMultiplier))
         {
             isIdleCoroutineRunning = false;
@@ -73,7 +69,6 @@ public class AnimalAI : MonoBehaviour
             return;
         }
 
-        // 2. DETECTION PLAYER CHECK (Scaled)
         float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
 
         if (distanceToPlayer <= (detectionRange * scaleMultiplier))
@@ -115,7 +110,6 @@ public class AnimalAI : MonoBehaviour
                 navMeshAgent.isStopped = false;
                 Vector3 directionToTarget = transform.position - playerTransform.position;
 
-                // FIXED: Factor scale into the absolute physical runaway distance step destination
                 Vector3 targetPosition = transform.position + directionToTarget.normalized * (runawayRange * scaleMultiplier);
 
                 navMeshAgent.SetDestination(targetPosition);
@@ -127,13 +121,12 @@ public class AnimalAI : MonoBehaviour
         }
     }
 
-    // --- PATROL LOGIC ---
+    
 
     public void PatrolRoutine()
     {
         navMeshAgent.isStopped = false;
 
-        // FIXED: Scale your remaining distance arrival cushion to match your custom scale factor size bounds
         float arrivalThreshold = (navMeshAgent.stoppingDistance + 0.1f) * scaleMultiplier;
 
         if (!navMeshAgent.pathPending && navMeshAgent.remainingDistance <= arrivalThreshold)
@@ -144,7 +137,6 @@ public class AnimalAI : MonoBehaviour
 
     public void PickNewPatrolPoint()
     {
-        // FIXED: Factor object scale directly into the search range bounds circle
         float calculatedRange = patrolRange * scaleMultiplier;
         Vector3 randomDirection = Random.insideUnitSphere * calculatedRange;
         randomDirection += areaCenter.position;
@@ -173,7 +165,6 @@ public class AnimalAI : MonoBehaviour
     {
         if (areaCenter != null)
         {
-            // Update Gizmos calculation matrix to reflect actual in-game scale settings bounds overlay
             float currentGizmoScale = Application.isPlaying ? scaleMultiplier : Mathf.Max(transform.localScale.x, transform.localScale.y, transform.localScale.z);
 
             Gizmos.color = Color.yellow;
